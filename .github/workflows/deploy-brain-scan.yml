@@ -1,0 +1,12 @@
+name: Deploy Brain Scan
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger Vercel deploy
+        run: curl -X POST "${{ secrets.VERCEL_BRAIN_SCAN_DEPLOY_HOOK }}"
