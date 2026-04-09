@@ -1,0 +1,171 @@
+---
+import Layout from "../layouts/Layout.astro";
+import "../styles/global.css";
+import { SKILLS } from "../data/skills";
+---
+
+<Layout title="Skill — Marketing 101">
+  <div class="app" id="app"></div>
+
+  <script define:vars={{ SKILLS }}>
+    function slugToTitle(slug) {
+      return slug.split('-').map(function(w) {
+        if (w === 'cro') return 'CRO';
+        if (w === 'seo') return 'SEO';
+        if (w === 'ai') return 'AI';
+        if (w === 'ab') return 'A/B';
+        if (w === 'gtm') return 'GTM';
+        return w.charAt(0).toUpperCase() + w.slice(1);
+      }).join(' ');
+    }
+
+    function categoryClass(cat) {
+      if (cat === 'CRO') return 'cro';
+      if (cat === 'Content & Copy') return 'content';
+      if (cat === 'SEO') return 'seo';
+      if (cat === 'Paid & Measurement') return 'paid';
+      if (cat === 'Growth & Retention') return 'growth';
+      if (cat === 'Sales & GTM') return 'sales';
+      if (cat === 'Strategy') return 'strategy';
+      return '';
+    }
+
+    function markdownToHtml(md) {
+      var html = md;
+
+      // Code blocks (``` ... ```)
+      html = html.replace(/```(\w*)\n([\s\S]*?)```/g, function(_, lang, code) {
+        var escaped = code.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+        return '<pre><code>' + escaped + '</code></pre>';
+      });
+
+      // Tables
+      html = html.replace(/(?:^|\n)(\|.+\|)\n(\|[-:\s|]+\|)\n((?:\|.+\|\n?)+)/g, function(_, headerRow, sepRow, bodyRows) {
+        var headers = headerRow.split('|').filter(function(c) { return c.trim(); });
+        var alignments = sepRow.split('|').filter(function(c) { return c.trim(); }).map(function(c) {
+          c = c.trim();
+          if (c.startsWith(':') && c.endsWith(':')) return 'center';
+          if (c.endsWith(':')) return 'right';
+          return 'left';
+        });
+        var rows = bodyRows.trim().split('\n').map(function(r) {
+          return r.split('|').filter(function(c) { return c.trim(); });
+        });
+        var t = '<table><thead><tr>';
+        headers.forEach(function(h, i) {
+          t += '<th style="text-align:' + (alignments[i] || 'left') + '">' + h.trim() + '</th>';
+        });
+        t += '</tr></thead><tbody>';
+        rows.forEach(function(row) {
+          t += '<tr>';
+          row.forEach(function(cell, i) {
+            t += '<td style="text-align:' + (alignments[i] || 'left') + '">' + cell.trim() + '</td>';
+          });
+          t += '</tr>';
+        });
+        t += '</tbody></table>';
+        return t;
+      });
+
+      // Horizontal rules
+      html = html.replace(/\n---+\n/g, '\n<hr>\n');
+
+      // Headers
+      html = html.replace(/^#### (.+)$/gm, '<h4>$1</h4>');
+      html = html.replace(/^### (.+)$/gm, '<h3>$1</h3>');
+      html = html.replace(/^## (.+)$/gm, '<h2>$1</h2>');
+      html = html.replace(/^# (.+)$/gm, '<h1>$1</h1>');
+
+      // Bold and italic
+      html = html.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+      html = html.replace(/\*(.+?)\*/g, '<em>$1</em>');
+
+      // Inline code
+      html = html.replace(/`([^`]+)`/g, '<code>$1</code>');
+
+      // Blockquotes
+      html = html.replace(/^>\s?(.+)$/gm, '<blockquote>$1</blockquote>');
+
+      // Unordered lists
+      html = html.replace(/(?:^|\n)((?:- .+\n?)+)/g, function(_, block) {
+        var items = block.trim().split('\n').map(function(line) {
+          return '<li>' + line.replace(/^- /, '') + '</li>';
+        }).join('');
+        return '<ul>' + items + '</ul>';
+      });
+
+      // Ordered lists
+      html = html.replace(/(?:^|\n)((?:\d+\. .+\n?)+)/g, function(_, block) {
+        var items = block.trim().split('\n').map(function(line) {
+          return '<li>' + line.replace(/^\d+\.\s/, '') + '</li>';
+        }).join('');
+        return '<ol>' + items + '</ol>';
+      });
+
+      // Links
+      html = html.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank">$1</a>');
+
+      // Paragraphs — wrap remaining text blocks
+      html = html.replace(/\n\n+/g, '\n\n');
+      html = html.split('\n\n').map(function(block) {
+        block = block.trim();
+        if (!block) return '';
+        if (block.match(/^<(h[1-4]|ul|ol|pre|table|blockquote|hr)/)) return block;
+        if (block.match(/<\/(h[1-4]|ul|ol|pre|table|blockquote)>$/)) return block;
+        return '<p>' + block + '</p>';
+      }).join('\n');
+
+      return html;
+    }
+
+    function render() {
+      var app = document.getElementById('app');
+      var params = new URLSearchParams(window.location.search);
+      var slug = params.get('s');
+
+      if (!slug) {
+        window.location.href = '/';
+        return;
+      }
+
+      var skill = null;
+      for (var i = 0; i < SKILLS.length; i++) {
+        if (SKILLS[i].slug === slug) { skill = SKILLS[i]; break; }
+      }
+
+      if (!skill) {
+        app.innerHTML = '<div class="empty-state">Skill not found. <a href="/">Back to all skills</a></div>';
+        return;
+      }
+
+      var html = '';
+      html += '<a href="/" class="back-link">&larr; All Skills</a>';
+
+      html += '<div class="skill-detail-header">';
+      html += '<div class="skill-detail-name">' + slugToTitle(skill.slug) + '</div>';
+      html += '<div class="skill-detail-meta">';
+      html += '<span class="category-badge ' + categoryClass(skill.category) + '">' + skill.category + '</span>';
+      if (skill.version) {
+        html += '<span class="version-badge">v' + skill.version + '</span>';
+      }
+      html += '</div>';
+      html += '</div>';
+
+      html += '<div class="md-content">';
+      html += markdownToHtml(skill.body);
+      html += '</div>';
+
+      // Footer
+      html += '<div class="footer">';
+      html += '<p>From <a href="https://github.com/coreyhaines31/marketingskills/tree/main/skills/' + skill.slug + '" target="_blank">marketingskills/' + skill.slug + '</a> (MIT)</p>';
+      html += '</div>';
+
+      app.innerHTML = html;
+
+      // Update page title
+      document.title = slugToTitle(skill.slug) + ' — Marketing 101';
+    }
+
+    render();
+  </script>
+</Layout>

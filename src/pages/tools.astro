@@ -1,0 +1,169 @@
+---
+import Layout from "../layouts/Layout.astro";
+import "../styles/global.css";
+import { TOOLS } from "../data/tools";
+---
+
+<Layout title="Tools — Marketing 101">
+  <div class="app" id="app"></div>
+
+  <script define:vars={{ TOOLS }}>
+    var activeFilter = 'All';
+    var searchQuery = '';
+    var expandedSlug = null;
+
+    function getFilteredTools() {
+      return TOOLS.filter(function(t) {
+        var matchesFilter = activeFilter === 'All' ||
+          (activeFilter === 'api' && t.capabilities.api) ||
+          (activeFilter === 'mcp' && t.capabilities.mcp) ||
+          (activeFilter === 'cli' && t.capabilities.cli) ||
+          (activeFilter === 'sdk' && t.capabilities.sdk);
+        var matchesSearch = !searchQuery ||
+          t.name.toLowerCase().indexOf(searchQuery.toLowerCase()) !== -1 ||
+          t.description.toLowerCase().indexOf(searchQuery.toLowerCase()) !== -1;
+        return matchesFilter && matchesSearch;
+      });
+    }
+
+    function countCap(key) {
+      return TOOLS.filter(function(t) { return t.capabilities[key]; }).length;
+    }
+
+    function markdownToHtml(md) {
+      var html = md;
+
+      // Code blocks
+      html = html.replace(/```(\w*)\n([\s\S]*?)```/g, function(_, lang, code) {
+        var escaped = code.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+        return '<pre><code>' + escaped + '</code></pre>';
+      });
+
+      // Tables
+      html = html.replace(/(?:^|\n)(\|.+\|)\n(\|[-:\s|]+\|)\n((?:\|.+\|\n?)+)/g, function(_, headerRow, sepRow, bodyRows) {
+        var headers = headerRow.split('|').filter(function(c) { return c.trim(); });
+        var rows = bodyRows.trim().split('\n').map(function(r) {
+          return r.split('|').filter(function(c) { return c.trim(); });
+        });
+        var t = '<table><thead><tr>';
+        headers.forEach(function(h) { t += '<th>' + h.trim() + '</th>'; });
+        t += '</tr></thead><tbody>';
+        rows.forEach(function(row) {
+          t += '<tr>';
+          row.forEach(function(cell) { t += '<td>' + cell.trim() + '</td>'; });
+          t += '</tr>';
+        });
+        t += '</tbody></table>';
+        return t;
+      });
+
+      html = html.replace(/\n---+\n/g, '\n<hr>\n');
+      html = html.replace(/^#### (.+)$/gm, '<h4>$1</h4>');
+      html = html.replace(/^### (.+)$/gm, '<h3>$1</h3>');
+      html = html.replace(/^## (.+)$/gm, '<h2>$1</h2>');
+      html = html.replace(/^# (.+)$/gm, '<h1>$1</h1>');
+      html = html.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+      html = html.replace(/\*(.+?)\*/g, '<em>$1</em>');
+      html = html.replace(/`([^`]+)`/g, '<code>$1</code>');
+      html = html.replace(/^>\s?(.+)$/gm, '<blockquote>$1</blockquote>');
+
+      html = html.replace(/(?:^|\n)((?:- .+\n?)+)/g, function(_, block) {
+        var items = block.trim().split('\n').map(function(line) {
+          return '<li>' + line.replace(/^- /, '') + '</li>';
+        }).join('');
+        return '<ul>' + items + '</ul>';
+      });
+
+      html = html.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank">$1</a>');
+
+      return html;
+    }
+
+    function render() {
+      var app = document.getElementById('app');
+      var filtered = getFilteredTools();
+      var html = '';
+
+      // Header
+      html += '<div class="header">';
+      html += '<div class="header-label">Marketing 101</div>';
+      html += '<h1>Tool Integrations</h1>';
+      html += '<p>' + TOOLS.length + ' marketing tools with API guides, capabilities, and integration details.</p>';
+      html += '<div class="header-nav">';
+      html += '<a href="/">Skills</a>';
+      html += '<a href="/tools" class="active">Tools</a>';
+      html += '</div>';
+      html += '</div>';
+
+      // Search
+      html += '<div class="search-bar">';
+      html += '<input type="text" class="search-input" placeholder="Search tools..." value="' + searchQuery + '" oninput="handleSearch(this.value)" />';
+      html += '</div>';
+
+      // Filter bar
+      html += '<div class="filter-bar">';
+      html += '<button class="filter-btn' + (activeFilter === 'All' ? ' active' : '') + '" onclick="filterCap(\'All\')">All <span class="count-badge">' + TOOLS.length + '</span></button>';
+      html += '<button class="filter-btn' + (activeFilter === 'api' ? ' active' : '') + '" onclick="filterCap(\'api\')">Has API <span class="count-badge">' + countCap('api') + '</span></button>';
+      html += '<button class="filter-btn' + (activeFilter === 'mcp' ? ' active' : '') + '" onclick="filterCap(\'mcp\')">Has MCP <span class="count-badge">' + countCap('mcp') + '</span></button>';
+      html += '<button class="filter-btn' + (activeFilter === 'cli' ? ' active' : '') + '" onclick="filterCap(\'cli\')">Has CLI <span class="count-badge">' + countCap('cli') + '</span></button>';
+      html += '<button class="filter-btn' + (activeFilter === 'sdk' ? ' active' : '') + '" onclick="filterCap(\'sdk\')">Has SDK <span class="count-badge">' + countCap('sdk') + '</span></button>';
+      html += '</div>';
+
+      // Tool cards
+      if (filtered.length === 0) {
+        html += '<div class="empty-state">No tools match your search.</div>';
+      } else {
+        filtered.forEach(function(tool) {
+          var isExpanded = expandedSlug === tool.slug;
+          html += '<div class="tool-card' + (isExpanded ? ' expanded' : '') + '" onclick="toggleTool(\'' + tool.slug + '\')">';
+          html += '<div class="tool-card-header">';
+          html += '<div>';
+          html += '<div class="tool-card-name">' + tool.name + '</div>';
+          html += '<div class="tool-card-desc">' + tool.description + '</div>';
+          html += '</div>';
+          html += '<span class="tool-card-toggle">&rsaquo;</span>';
+          html += '</div>';
+
+          // Capability badges
+          html += '<div class="tool-card-caps">';
+          if (tool.capabilities.api) html += '<span class="cap-badge api">API</span>';
+          if (tool.capabilities.mcp) html += '<span class="cap-badge mcp">MCP</span>';
+          if (tool.capabilities.cli) html += '<span class="cap-badge cli">CLI</span>';
+          if (tool.capabilities.sdk) html += '<span class="cap-badge sdk">SDK</span>';
+          html += '</div>';
+
+          // Expandable body
+          html += '<div class="tool-card-body md-content">';
+          html += markdownToHtml(tool.body);
+          html += '</div>';
+
+          html += '</div>';
+        });
+      }
+
+      // Footer
+      html += '<div class="footer">';
+      html += '<p>Tools from <a href="https://github.com/coreyhaines31/marketingskills/tree/main/tools/integrations" target="_blank">marketingskills/tools</a> (MIT). Built by Corey Haines.</p>';
+      html += '</div>';
+
+      app.innerHTML = html;
+    }
+
+    window.filterCap = function(cap) {
+      activeFilter = cap;
+      render();
+    };
+
+    window.handleSearch = function(val) {
+      searchQuery = val;
+      render();
+    };
+
+    window.toggleTool = function(slug) {
+      expandedSlug = expandedSlug === slug ? null : slug;
+      render();
+    };
+
+    render();
+  </script>
+</Layout>

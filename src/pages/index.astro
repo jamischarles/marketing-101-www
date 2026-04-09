@@ -1,0 +1,122 @@
+---
+import Layout from "../layouts/Layout.astro";
+import "../styles/global.css";
+import { SKILLS, CATEGORIES } from "../data/skills";
+---
+
+<Layout title="Marketing 101">
+  <div class="app" id="app"></div>
+
+  <script define:vars={{ SKILLS, CATEGORIES }}>
+    var activeCategory = 'All';
+    var searchQuery = '';
+
+    function slugToTitle(slug) {
+      return slug.split('-').map(function(w) {
+        if (w === 'cro') return 'CRO';
+        if (w === 'seo') return 'SEO';
+        if (w === 'ai') return 'AI';
+        if (w === 'ab') return 'A/B';
+        if (w === 'gtm') return 'GTM';
+        return w.charAt(0).toUpperCase() + w.slice(1);
+      }).join(' ');
+    }
+
+    function categoryClass(cat) {
+      if (cat === 'CRO') return 'cro';
+      if (cat === 'Content & Copy') return 'content';
+      if (cat === 'SEO') return 'seo';
+      if (cat === 'Paid & Measurement') return 'paid';
+      if (cat === 'Growth & Retention') return 'growth';
+      if (cat === 'Sales & GTM') return 'sales';
+      if (cat === 'Strategy') return 'strategy';
+      return '';
+    }
+
+    function getFilteredSkills() {
+      return SKILLS.filter(function(s) {
+        var matchesCat = activeCategory === 'All' || s.category === activeCategory;
+        var matchesSearch = !searchQuery ||
+          s.name.toLowerCase().indexOf(searchQuery.toLowerCase()) !== -1 ||
+          s.description.toLowerCase().indexOf(searchQuery.toLowerCase()) !== -1;
+        return matchesCat && matchesSearch;
+      });
+    }
+
+    function truncateDesc(desc, max) {
+      if (!desc) return '';
+      // Strip trigger phrase boilerplate
+      var clean = desc.replace(/^When the user wants to\s+/i, '').replace(/\.\s*Also use when.*$/s, '.');
+      if (clean.length <= max) return clean;
+      return clean.substring(0, max).replace(/\s+\S*$/, '') + '...';
+    }
+
+    function render() {
+      var app = document.getElementById('app');
+      var filtered = getFilteredSkills();
+      var html = '';
+
+      // Header
+      html += '<div class="header">';
+      html += '<div class="header-label">Marketing 101</div>';
+      html += '<h1>35 Marketing Skills for AI Agents</h1>';
+      html += '<p>Open source skill library. Browse, learn, and level up your marketing.</p>';
+      html += '<div class="header-nav">';
+      html += '<a href="/" class="active">Skills</a>';
+      html += '<a href="/tools">Tools</a>';
+      html += '</div>';
+      html += '</div>';
+
+      // Search
+      html += '<div class="search-bar">';
+      html += '<input type="text" class="search-input" placeholder="Search skills..." value="' + searchQuery + '" oninput="handleSearch(this.value)" />';
+      html += '</div>';
+
+      // Category filter
+      html += '<div class="filter-bar">';
+      html += '<button class="filter-btn' + (activeCategory === 'All' ? ' active' : '') + '" onclick="filterCategory(\'All\')">All <span class="count-badge">' + SKILLS.length + '</span></button>';
+      CATEGORIES.forEach(function(cat) {
+        var count = SKILLS.filter(function(s) { return s.category === cat; }).length;
+        html += '<button class="filter-btn' + (activeCategory === cat ? ' active' : '') + '" onclick="filterCategory(\'' + cat.replace(/'/g, "\\'") + '\')">' + cat + ' <span class="count-badge">' + count + '</span></button>';
+      });
+      html += '</div>';
+
+      // Skills grid
+      if (filtered.length === 0) {
+        html += '<div class="empty-state">No skills match your search.</div>';
+      } else {
+        html += '<div class="skills-grid">';
+        filtered.forEach(function(skill) {
+          html += '<a class="skill-card" href="/skill?s=' + skill.slug + '">';
+          html += '<div class="skill-card-name">' + slugToTitle(skill.slug) + '</div>';
+          html += '<div class="skill-card-desc">' + truncateDesc(skill.description, 120) + '</div>';
+          html += '<div class="skill-card-footer">';
+          html += '<span class="category-badge ' + categoryClass(skill.category) + '">' + skill.category + '</span>';
+          html += '<span class="skill-card-arrow">&rarr;</span>';
+          html += '</div>';
+          html += '</a>';
+        });
+        html += '</div>';
+      }
+
+      // Footer
+      html += '<div class="footer">';
+      html += '<p>Skills from <a href="https://github.com/coreyhaines31/marketingskills" target="_blank">coreyhaines31/marketingskills</a> (MIT). Built by Corey Haines.</p>';
+      html += '</div>';
+
+      app.innerHTML = html;
+    }
+
+    window.filterCategory = function(cat) {
+      activeCategory = cat;
+      render();
+    };
+
+    window.handleSearch = function(val) {
+      searchQuery = val;
+      render();
+    };
+
+    render();
+  </script>
+</Layout>
