@@ -10,7 +10,7 @@
  * Usage: node scripts/generate-ts.mjs
  */
 
-import { readFileSync, writeFileSync, readdirSync } from "node:fs";
+import { readFileSync, writeFileSync, readdirSync, mkdirSync } from "node:fs";
 import { join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 import matter from "gray-matter";
@@ -19,12 +19,15 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dirname, "..");
 const SKILLS_DIR = join(ROOT, ".skills", "skills");
 const TOOLS_DIR = join(ROOT, ".skills", "tools", "integrations");
+const LESSONS_DIR = join(ROOT, "content", "lessons");
 const DATA = join(ROOT, "src", "data");
+
+const KNOWN_AUTHOR_KEYS = new Set(["weinberg", "hormozi", "priestley"]);
 
 /** Parse frontmatter safely — falls back to regex if YAML is malformed */
 function safeMatter(raw) {
   try {
-    return safeMatter(raw);
+    return matter(raw);
   } catch {
     // Manually extract frontmatter fields for files with unquoted colons
     const fmMatch = raw.match(/^---\n([\s\S]*?)\n---\n?([\s\S]*)$/);
@@ -43,7 +46,8 @@ function safeMatter(raw) {
 }
 
 function writeTs(filename, content) {
-  const header = `// Auto-generated from .skills/ markdown. Do not edit directly.\n// Run: node scripts/generate-ts.mjs\n\n`;
+  const header = `// Auto-generated from markdown sources. Do not edit directly.\n// Run: node scripts/generate-ts.mjs\n\n`;
+  mkdirSync(DATA, { recursive: true });
   writeFileSync(join(DATA, filename), header + content);
   console.log(`  ✓ ${filename}`);
 }
@@ -201,8 +205,81 @@ export const TOOLS: Tool[] = ${json(tools)};
   );
 }
 
+// ─── Lessons ──────────────────────────────────────────────────
+function generateLessons() {
+  let files;
+  try {
+    files = readdirSync(LESSONS_DIR)
+      .filter((f) => f.endsWith(".md"))
+      .sort();
+  } catch (err) {
+    if (err.code === "ENOENT") {
+      console.log("  ⚠ content/lessons/ not found — skipping lessons");
+      return;
+    }
+    throw err;
+  }
+
+  const seenSlugs = new Set();
+  const lessons = files.map((filename) => {
+    const slug = filename.replace(/\.md$/, "");
+    if (seenSlugs.has(slug)) {
+      throw new Error(`Duplicate lesson slug: ${slug}`);
+    }
+    seenSlugs.add(slug);
+
+    const raw = readFileSync(join(LESSONS_DIR, filename), "utf-8");
+    const { data: fm, content: body } = safeMatter(raw);
+
+    // Required fields
+    for (const field of ["title", "book", "author", "author_key"]) {
+      if (!fm[field]) {
+        throw new Error(`Lesson ${slug}: missing required frontmatter field "${field}"`);
+      }
+    }
+    if (!KNOWN_AUTHOR_KEYS.has(fm.author_key)) {
+      throw new Error(
+        `Lesson ${slug}: unknown author_key "${fm.author_key}" (expected one of: ${[...KNOWN_AUTHOR_KEYS].join(", ")})`
+      );
+    }
+
+    return {
+      slug,
+      title: fm.title,
+      book: fm.book,
+      author: fm.author,
+      authorKey: fm.author_key,
+      topic: fm.topic || "",
+      tags: Array.isArray(fm.tags) ? fm.tags : [],
+      relatedSkills: Array.isArray(fm.related_skills) ? fm.related_skills : [],
+      body,
+    };
+  });
+
+  writeTs(
+    "lessons.ts",
+    `export interface Lesson {
+  slug: string;
+  title: string;
+  book: string;
+  author: string;
+  authorKey: string;
+  topic: string;
+  tags: string[];
+  relatedSkills: string[];
+  body: string;
+}
+
+export const LESSONS: Lesson[] = ${json(lessons)};
+
+export const AUTHORS: string[] = ${json([...new Set(lessons.map((l) => l.authorKey))])};
+`
+  );
+}
+
 // ─── Main ─────────────────────────────────────────────────────
-console.log("Generating TS from .skills/ markdown...\n");
+console.log("Generating TS from markdown sources...\n");
 generateSkills();
 generateTools();
-console.log("\nDone! 2 files generated.");
+generateLessons();
+console.log("\nDone.");
