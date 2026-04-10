@@ -1,0 +1,247 @@
+---
+import Layout from "../layouts/Layout.astro";
+import "../styles/global.css";
+import { LESSONS, AUTHORS } from "../data/lessons";
+---
+
+<Layout title="Lessons — Marketing 101">
+  <div class="app" id="app"></div>
+
+  <script define:vars={{ LESSONS, AUTHORS }}>
+    var activeAuthor = 'All';
+    var searchQuery = '';
+    var expandedSlug = null;
+
+    var AUTHOR_LABELS = {
+      weinberg: 'Weinberg',
+      hormozi: 'Hormozi',
+      priestley: 'Priestley',
+    };
+
+    // Reuse existing category-badge color classes as author colors.
+    // weinberg → green (growth), hormozi → coral (offers), priestley → steel (authority)
+    var AUTHOR_COLOR = {
+      weinberg: 'growth',
+      hormozi: 'paid',
+      priestley: 'strategy',
+    };
+
+    function getFilteredLessons() {
+      return LESSONS.filter(function(l) {
+        var matchesAuthor = activeAuthor === 'All' || l.authorKey === activeAuthor;
+        var q = searchQuery.toLowerCase();
+        var matchesSearch = !q ||
+          l.title.toLowerCase().indexOf(q) !== -1 ||
+          l.book.toLowerCase().indexOf(q) !== -1 ||
+          l.author.toLowerCase().indexOf(q) !== -1 ||
+          l.topic.toLowerCase().indexOf(q) !== -1 ||
+          (l.tags || []).join(' ').toLowerCase().indexOf(q) !== -1 ||
+          l.body.toLowerCase().indexOf(q) !== -1;
+        return matchesAuthor && matchesSearch;
+      });
+    }
+
+    function countAuthor(key) {
+      return LESSONS.filter(function(l) { return l.authorKey === key; }).length;
+    }
+
+    function escapeHtml(s) {
+      return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    }
+
+    function markdownToHtml(md) {
+      var html = md;
+
+      // Code blocks
+      html = html.replace(/```(\w*)\n([\s\S]*?)```/g, function(_, lang, code) {
+        var escaped = code.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+        return '<pre><code>' + escaped + '</code></pre>';
+      });
+
+      // Tables
+      html = html.replace(/(?:^|\n)(\|.+\|)\n(\|[-:\s|]+\|)\n((?:\|.+\|\n?)+)/g, function(_, headerRow, sepRow, bodyRows) {
+        var headers = headerRow.split('|').filter(function(c) { return c.trim(); });
+        var alignments = sepRow.split('|').filter(function(c) { return c.trim(); }).map(function(c) {
+          c = c.trim();
+          if (c.startsWith(':') && c.endsWith(':')) return 'center';
+          if (c.endsWith(':')) return 'right';
+          return 'left';
+        });
+        var rows = bodyRows.trim().split('\n').map(function(r) {
+          return r.split('|').filter(function(c) { return c.trim(); });
+        });
+        var t = '<table><thead><tr>';
+        headers.forEach(function(h, i) {
+          t += '<th style="text-align:' + (alignments[i] || 'left') + '">' + h.trim() + '</th>';
+        });
+        t += '</tr></thead><tbody>';
+        rows.forEach(function(row) {
+          t += '<tr>';
+          row.forEach(function(cell, i) {
+            t += '<td style="text-align:' + (alignments[i] || 'left') + '">' + cell.trim() + '</td>';
+          });
+          t += '</tr>';
+        });
+        t += '</tbody></table>';
+        return t;
+      });
+
+      // Horizontal rules
+      html = html.replace(/\n---+\n/g, '\n<hr>\n');
+
+      // Headers
+      html = html.replace(/^#### (.+)$/gm, '<h4>$1</h4>');
+      html = html.replace(/^### (.+)$/gm, '<h3>$1</h3>');
+      html = html.replace(/^## (.+)$/gm, '<h2>$1</h2>');
+      html = html.replace(/^# (.+)$/gm, '<h1>$1</h1>');
+
+      // Bold and italic
+      html = html.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+      html = html.replace(/\*(.+?)\*/g, '<em>$1</em>');
+
+      // Inline code
+      html = html.replace(/`([^`]+)`/g, '<code>$1</code>');
+
+      // Blockquotes
+      html = html.replace(/^>\s?(.+)$/gm, '<blockquote>$1</blockquote>');
+
+      // Unordered lists
+      html = html.replace(/(?:^|\n)((?:- .+\n?)+)/g, function(_, block) {
+        var items = block.trim().split('\n').map(function(line) {
+          return '<li>' + line.replace(/^- /, '') + '</li>';
+        }).join('');
+        return '<ul>' + items + '</ul>';
+      });
+
+      // Ordered lists
+      html = html.replace(/(?:^|\n)((?:\d+\. .+\n?)+)/g, function(_, block) {
+        var items = block.trim().split('\n').map(function(line) {
+          return '<li>' + line.replace(/^\d+\.\s/, '') + '</li>';
+        }).join('');
+        return '<ol>' + items + '</ol>';
+      });
+
+      // Links
+      html = html.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank">$1</a>');
+
+      // Paragraphs — wrap remaining text blocks
+      html = html.replace(/\n\n+/g, '\n\n');
+      html = html.split('\n\n').map(function(block) {
+        block = block.trim();
+        if (!block) return '';
+        if (block.match(/^<(h[1-4]|ul|ol|pre|table|blockquote|hr)/)) return block;
+        if (block.match(/<\/(h[1-4]|ul|ol|pre|table|blockquote)>$/)) return block;
+        return '<p>' + block + '</p>';
+      }).join('\n');
+
+      return html;
+    }
+
+    function render() {
+      var app = document.getElementById('app');
+      var filtered = getFilteredLessons();
+      var html = '';
+
+      // Header
+      html += '<div class="header">';
+      html += '<div class="header-label">Marketing 101</div>';
+      html += '<h1>Book Lessons</h1>';
+      html += '<p>Attributed notes from influential marketing &amp; growth books. Start with Weinberg&rsquo;s <em>Traction</em>, layered with Hormozi and Priestley.</p>';
+      html += '<div class="header-nav">';
+      html += '<a href="/">Skills</a>';
+      html += '<a href="/tools">Tools</a>';
+      html += '<a href="/lessons" class="active">Lessons</a>';
+      html += '</div>';
+      html += '</div>';
+
+      // Search
+      html += '<div class="search-bar">';
+      html += '<input type="text" class="search-input" placeholder="Search lessons..." value="' + escapeHtml(searchQuery) + '" oninput="handleSearch(this.value)" />';
+      html += '</div>';
+
+      // Author filter
+      html += '<div class="filter-bar">';
+      html += '<button class="filter-btn' + (activeAuthor === 'All' ? ' active' : '') + '" onclick="filterAuthor(\'All\')">All <span class="count-badge">' + LESSONS.length + '</span></button>';
+      AUTHORS.forEach(function(key) {
+        var label = AUTHOR_LABELS[key] || key;
+        html += '<button class="filter-btn' + (activeAuthor === key ? ' active' : '') + '" onclick="filterAuthor(\'' + key + '\')">' + label + ' <span class="count-badge">' + countAuthor(key) + '</span></button>';
+      });
+      html += '</div>';
+
+      // Lesson cards
+      if (filtered.length === 0) {
+        html += '<div class="empty-state">No lessons match your search.</div>';
+      } else {
+        filtered.forEach(function(lesson) {
+          var isExpanded = expandedSlug === lesson.slug;
+          var colorClass = AUTHOR_COLOR[lesson.authorKey] || '';
+          html += '<div class="tool-card' + (isExpanded ? ' expanded' : '') + '" onclick="toggleLesson(\'' + lesson.slug + '\')">';
+          html += '<div class="tool-card-header">';
+          html += '<div>';
+          html += '<div class="tool-card-name">' + escapeHtml(lesson.title) + '</div>';
+          html += '<div class="tool-card-desc"><em>' + escapeHtml(lesson.book) + '</em> &mdash; ' + escapeHtml(lesson.author) + '</div>';
+          html += '</div>';
+          html += '<span class="tool-card-toggle">&rsaquo;</span>';
+          html += '</div>';
+
+          // Badges row: author + topic + tags
+          html += '<div class="tool-card-caps">';
+          html += '<span class="category-badge ' + colorClass + '">' + escapeHtml(AUTHOR_LABELS[lesson.authorKey] || lesson.authorKey) + '</span>';
+          if (lesson.topic) {
+            html += '<span class="category-badge">' + escapeHtml(lesson.topic) + '</span>';
+          }
+          html += '</div>';
+
+          // Expandable body
+          html += '<div class="tool-card-body md-content">';
+          html += markdownToHtml(lesson.body);
+
+          // Related skills list
+          if (lesson.relatedSkills && lesson.relatedSkills.length) {
+            html += '<hr><p><strong>Related skills on this site:</strong> ';
+            html += lesson.relatedSkills.map(function(s) {
+              return '<a href="/skill?s=' + encodeURIComponent(s) + '">' + escapeHtml(s) + '</a>';
+            }).join(', ');
+            html += '</p>';
+          }
+
+          html += '</div>';
+
+          html += '</div>';
+        });
+      }
+
+      // Footer
+      html += '<div class="footer">';
+      html += '<p>Lessons extracted from: ';
+      html += '<a href="https://www.goodreads.com/book/show/22091581-traction" target="_blank">Traction</a> by Gabriel Weinberg &amp; Justin Mares, ';
+      html += '<a href="https://www.acquisition.com/books/offers" target="_blank">$100M Offers</a> and ';
+      html += '<a href="https://www.acquisition.com/books/leads" target="_blank">$100M Leads</a> by Alex Hormozi, and ';
+      html += '<a href="https://www.danielpriestley.com/books" target="_blank">Key Person of Influence</a> &amp; <a href="https://www.danielpriestley.com/books" target="_blank">Oversubscribed</a> by Daniel Priestley. ';
+      html += 'All lessons are editorial notes — read the originals for the full argument.</p>';
+      html += '</div>';
+
+      app.innerHTML = html;
+    }
+
+    window.filterAuthor = function(key) {
+      activeAuthor = key;
+      expandedSlug = null;
+      render();
+    };
+
+    window.handleSearch = function(val) {
+      searchQuery = val;
+      render();
+    };
+
+    window.toggleLesson = function(slug) {
+      // Prevent clicks on links inside an expanded card from collapsing it
+      if (window.event && window.event.target && window.event.target.tagName === 'A') return;
+      expandedSlug = expandedSlug === slug ? null : slug;
+      render();
+    };
+
+    render();
+  </script>
+</Layout>
