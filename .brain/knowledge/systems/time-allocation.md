@@ -70,6 +70,20 @@ daily_limits:
   context_switches: 2           # Max major project switches per day
 ```
 
+### Bucket Goals
+
+Think of each allocation as a bucket that fills up during the week. The percentages are the *target fill level*, not a rigid daily prescription. Extreme flexibility in *how* each bucket fills — any task that serves the bucket's purpose counts. Wrote a tweet thread? Marketing bucket. Reviewed a PR? Product bucket. Updated the brain repo? Process bucket.
+
+The weekly review checks bucket fill levels, not rigid task completion. The question is: "Did each area get enough energy this week?" not "Did I follow the exact schedule every day?" This reframes the system from compliance to balance.
+
+Visual: imagine five meters, each filling toward their target line. If marketing is at 10% and product is at 50% by Wednesday, that's the signal to rebalance — not a failure. The [Rule of 100](../playbooks/rule-of-100.md) applied per-bucket gives each area its own volume target scaled to the allocation.
+
+### Weekly Themes (Optional Layer)
+
+Assign a default theme to each weekday to reduce decision fatigue about what to work on in each maker block. Example: Monday = marketing focus, Tuesday = product, Wednesday = content, Thursday = outreach, Friday = process/review.
+
+Source: CGP Grey / Cortex podcast — themes set intention without creating rigid schedules. The theme biases your maker blocks but doesn't eliminate flexibility. If a sprint is active, the sprint overrides themes. If [Lion Energy](../mental-models/lion-energy.md) says Builder energy showed up on a "marketing day," ride the energy — the theme is a default, not a prison.
+
 ### Why This Split
 
 - **Marketing + Content = 60%.** The weakest pillar right now is Lead Gen
@@ -254,8 +268,13 @@ Hard rules. Not guidelines.
 
 ## Related
 
-- [Rule of 100](../playbooks/rule-of-100.md) — drives the Marketing & Social bucket
+- [Rule of 100](../playbooks/rule-of-100.md) — drives the Marketing & Social bucket; bucket goals scale the "100" per area
 - [7-11-4 Content Strategy](../playbooks/daniel-priestley-content.md) — drives the Content Shipping bucket
 - [Volume Creates Skill](../principles/volume-creates-skill.md) — the principle behind doing reps, not perfecting
 - [Three Pillars](../mental-models/three-pillars.md) — why Marketing + Content = 60% of default allocation
 - [Goals](../../business/goals.md) — Q2 2026 priorities this allocation serves
+- [Lion Energy](../mental-models/lion-energy.md) — burst pattern behind the daily schedule; energy overrides themes
+- [Personal Kanban](../playbooks/personal-kanban.md) — the two-project-max rule is a WIP limit
+- [Shape Up](../playbooks/shape-up.md) — sprint modalities are solo-adapted shaped cycles
+- [GTD](../playbooks/gtd.md) — weekly review is the GTD Reflect step
+- [Productivity Decision Tree](../systems/productivity-decision-tree.md) — "which technique do I need right now?"

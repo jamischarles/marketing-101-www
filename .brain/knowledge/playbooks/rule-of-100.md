@@ -22,6 +22,7 @@ Alex Hormozi — *$100M Leads*, social media content.
 - **The math is simple** — 2% conversion rate means you need 50 attempts for one win; most people quit at 10
 - **Skill is a byproduct** — you get good at cold calls by making hundreds of them, not by reading about cold calls
 - **Pick one channel** — don't split your 100 across five things; go deep on one
+- **Bucket Goals** — apply the Rule of 100 per life/work bucket rather than globally. Each bucket (marketing, content, product, process) gets its own "100" target scaled to its [time allocation](../systems/time-allocation.md). If marketing is 30% of your time, the Rule of 100 for marketing might be 30 outreach actions/week — not 100/day, which would consume all available time. This prevents the Rule of 100 from cannibalizing every other priority
 
 ## How I Apply It
 
@@ -33,3 +34,5 @@ Alex Hormozi — *$100M Leads*, social media content.
 
 - [Volume Creates Skill](../principles/volume-creates-skill.md) — the principle behind this playbook
 - [Three Pillars](../mental-models/three-pillars.md) — identifies which pillar needs the volume
+- [Time Allocation](../systems/time-allocation.md) — bucket allocations define the "100" target per area
+- [Productivity Decision Tree](../systems/productivity-decision-tree.md) — "I'm avoiding work" → just do reps
