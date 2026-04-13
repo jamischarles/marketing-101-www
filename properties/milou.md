@@ -1,7 +1,7 @@
 # Milou
 
 ## Overview
-Solopreneur command center — business operations HQ for managing all Save My Brain properties, from feedback triage to strategy to task dispatch.
+Solopreneur command center — daily co-pilot for productivity technique selection, time allocation accountability, and business ops across all Save My Brain properties.
 
 ## Risk Appetite
 **Balanced** — internal ops tool; only you use it, but breaking it disrupts the whole workflow.
@@ -35,6 +35,15 @@ N/A — internal tool, not public-facing.
 ## Roadmap
 - Continue refining triage workflow
 - Expand app registry as new properties launch
+- Bucket goal tracking — visual meters showing energy allocation vs. target per area
+- Productivity decision tree — "what do you need right now?" prompt at the start of each maker block
+- Self-indoctrination / priming — surface relevant education (marketing principles, sales frameworks) before a work block in that area
+- Weekly theme support — assign default themes per day, allow energy-based overrides
 
 ## Related
+- [Time Allocation](../knowledge/systems/time-allocation.md) — Milou enforces this system
+- [Productivity Decision Tree](../knowledge/systems/productivity-decision-tree.md) — Milou surfaces this at maker block start
+- [Shape Up](../knowledge/playbooks/shape-up.md) — bets and appetite tracking
+- [Personal Kanban](../knowledge/playbooks/personal-kanban.md) — WIP limits in the task menu
+- [GTD](../knowledge/playbooks/gtd.md) — Telegram capture is GTD inbox
 - Connects to all other properties via app registry
