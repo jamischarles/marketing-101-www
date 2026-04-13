@@ -12,6 +12,7 @@
 | Milou | Internal ops (not public) | Build > Dogfood | [→](milou.md) |
 | jamischarles.com | Personal site | — | [→](jamischarles-com.md) |
 | PostHog Interview | Interactive web app | Build > Prototype | [→](interview-posthog.md) |
+| Solopreneur Engineering Skills | Claude Code skill plugin | Active | [→](solopreneur-engineering-skills.md) |
 
 ## Unassigned (potential future company)
 

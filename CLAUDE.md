@@ -15,6 +15,9 @@ See brand/jamischarles/identity.md
 ## Voice & Style
 See brand/jamischarles/voice.md
 
+## Typography
+See brand/jamischarles/typography.md
+
 ## Public Persona
 See brand/jamischarles/persona.md
 
