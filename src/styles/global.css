@@ -492,3 +492,43 @@ body {
   padding: 2px 8px;
   border-radius: 10px;
 }
+
+/* Related Lessons block on skill detail pages */
+.related-lessons {
+  margin-top: 40px;
+  padding: 20px 24px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+}
+
+.related-lessons h3 {
+  margin: 0 0 12px 0;
+  font-size: 15px;
+  color: var(--text);
+}
+
+.related-lessons ul {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.related-lessons li {
+  padding: 6px 0;
+  font-size: 14px;
+}
+
+.related-lessons a {
+  color: var(--accent);
+  text-decoration: none;
+}
+
+.related-lessons a:hover {
+  text-decoration: underline;
+}
+
+.related-lesson-meta {
+  color: var(--text-muted);
+  font-size: 13px;
+}

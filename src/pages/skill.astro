@@ -2,12 +2,13 @@
 import Layout from "../layouts/Layout.astro";
 import "../styles/global.css";
 import { SKILLS } from "../data/skills";
+import { LESSONS } from "../data/lessons";
 ---
 
 <Layout title="Skill — Marketing 101">
   <div class="app" id="app"></div>
 
-  <script define:vars={{ SKILLS }}>
+  <script define:vars={{ SKILLS, LESSONS }}>
     function slugToTitle(slug) {
       return slug.split('-').map(function(w) {
         if (w === 'cro') return 'CRO';
@@ -154,6 +155,21 @@ import { SKILLS } from "../data/skills";
       html += '<div class="md-content">';
       html += markdownToHtml(skill.body);
       html += '</div>';
+
+      // Related Lessons — lessons from book notes that reference this skill
+      var related = LESSONS.filter(function(l) {
+        return (l.relatedSkills || []).indexOf(skill.slug) !== -1;
+      });
+      if (related.length) {
+        html += '<div class="related-lessons">';
+        html += '<h3>Related Lessons</h3>';
+        html += '<ul>';
+        related.forEach(function(l) {
+          html += '<li><a href="/lessons">' + l.title + '</a> <span class="related-lesson-meta">&mdash; <em>' + l.book.replace(/:.*$/, '') + '</em>, ' + l.author + '</span></li>';
+        });
+        html += '</ul>';
+        html += '</div>';
+      }
 
       // Footer
       html += '<div class="footer">';
